@@ -190,6 +190,26 @@ def crawling_gs_homeshopping(start_day, end_day):
 
     return homeshopping_list
 
+def crawling_nsshooping(start_day, end_day):
+
+    delta = end_day - start_day
+    homeshopping_list = []
+
+    for i in range(delta.days + 1):
+        
+        d = start_day + timedelta(days=i)
+        today = d.strftime('%Y%m%d')
+        search_day = d.strftime('%Y-%m-%d')
+
+        one_day_list = []
+       
+        # GS home shopping
+        url_ns = "http://www.nsmall.com/TVHomeShoppingBrodcastingList?tab_gubun=1&tab_Week=1&tab_bord=0&selectDay=" + search_day + "&catalogId=18151&langId=-9&storeId=13001#goToLocation"
+        print(url_gs)
+
+        time.sleep(0.5)
+
+    return homeshopping_list
 
 # 날짜/분류/시간/아이템
 def crawling_cj_oshopping(start_day, end_day):
@@ -275,7 +295,7 @@ def write_excel_file(result_list, view_all_item):
     offset = 1
 
     worksheet0.write(0, 0, "날짜", filter_format3)
-    worksheet0.write(0, 1, "분류", filter_format3)
+    worksheet0.write(0, 1, "분류/제목", filter_format3)
     worksheet0.write(0, 2, "시간", filter_format3)
     worksheet0.write(0, 3, "아이템", filter_format3)
 
@@ -305,7 +325,14 @@ def write_excel_file(result_list, view_all_item):
 def main():
 
     #[TODO] 
-    # ....
+    ##티커머스...
+    # K쇼핑, 신세계쇼핑, CJ오쇼핑플러스, 현대홈쇼핑플러스, 
+    # 롯데원TV, GS마이샵, SK스토아, W쇼핑, 쇼핑엔티, 
+    # NS홈쇼핑+, 홈앤쇼핑2채널, K쇼핑2채널
+
+   
+
+    
 
     # Options...
     start_day = datetime(2020,6,1)
@@ -316,17 +343,33 @@ def main():
 
     #input_file = "req_trade.xlsx"
     
+    ## 라이브 홈쇼핑
+    # CJ오쇼핑
     #result_list = crawling_cj_oshopping(start_day, end_day)
 
+    # GS홈쇼핑
     #result_list = crawling_gs_homeshopping(start_day, end_day)
 
+    #현대홈쇼핑
     #result_list = crawling_hyundai_shopping(start_day, end_day)
 
+    #홈앤쇼핑
     result_list = crawling_home_and_shooping(start_day, end_day)
+
+    #롯데홈쇼핑
+    ## http://www.lotteimall.com/main/searchTvPgmByDay.lotte?bd_date=20200609
+
+    #NS홈쇼핑
+    #result_list = crawling_nsshooping(start_day, end_day)
+    
+    #공영홈쇼핑
+    ## https://www.gongyoungshop.kr/tvshopping/selectScheduleSub.do?brcStdDate=20200610
 
     #print(result_list)
 
     write_excel_file(result_list, view_all_item)
+
+    
 
 
 # Main
