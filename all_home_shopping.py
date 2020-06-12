@@ -67,7 +67,7 @@ def crawling_hyundai_shopping(start_day, end_day):
     
     return homeshopping_list
 
-def crawling_home_and_shooping(start_day, end_day):
+def crawling_home_and_shopping(start_day, end_day):
 
     delta = end_day - start_day
     homeshopping_list = []
@@ -190,7 +190,49 @@ def crawling_gs_homeshopping(start_day, end_day):
 
     return homeshopping_list
 
-def crawling_nsshooping(start_day, end_day):
+def crawling_ky_homeshopping(start_day, end_day):
+
+    delta = end_day - start_day
+    homeshopping_list = []
+
+    for i in range(delta.days + 1):
+        
+        d = start_day + timedelta(days=i)
+        today = d.strftime('%Y%m%d')
+        search_day = d.strftime('%Y-%m-%d')
+
+        one_day_list = []
+       
+        # KongYoung home shopping
+        url_ky = "https://www.gongyoungshop.kr/tvshopping/selectScheduleSub.do?brcStdDate=20200610"
+        print(url_ky)
+
+        time.sleep(0.5)
+
+    return homeshopping_list
+
+def crawling_lotte_homeshopping(start_day, end_day):
+
+    delta = end_day - start_day
+    homeshopping_list = []
+
+    for i in range(delta.days + 1):
+        
+        d = start_day + timedelta(days=i)
+        today = d.strftime('%Y%m%d')
+        search_day = d.strftime('%Y-%m-%d')
+
+        one_day_list = []
+       
+        # Lotte home shopping
+        url_lotte = "http://www.lotteimall.com/main/searchTvPgmByDay.lotte?bd_date=20200609"
+        print(url_lotte)
+
+        time.sleep(0.5)
+
+    return homeshopping_list
+
+def crawling_nsshopping(start_day, end_day):
 
     delta = end_day - start_day
     homeshopping_list = []
@@ -321,7 +363,6 @@ def write_excel_file(result_list, view_all_item):
 
     workbook.close()
 
-
 def main():
 
     #[TODO] 
@@ -329,10 +370,6 @@ def main():
     # K쇼핑, 신세계쇼핑, CJ오쇼핑플러스, 현대홈쇼핑플러스, 
     # 롯데원TV, GS마이샵, SK스토아, W쇼핑, 쇼핑엔티, 
     # NS홈쇼핑+, 홈앤쇼핑2채널, K쇼핑2채널
-
-   
-
-    
 
     # Options...
     start_day = datetime(2020,6,1)
@@ -354,22 +391,20 @@ def main():
     #result_list = crawling_hyundai_shopping(start_day, end_day)
 
     #홈앤쇼핑
-    result_list = crawling_home_and_shooping(start_day, end_day)
+    result_list = crawling_home_and_shopping(start_day, end_day)
 
     #롯데홈쇼핑
-    ## http://www.lotteimall.com/main/searchTvPgmByDay.lotte?bd_date=20200609
+    #result_list = crawling_lotte_homeshopping(start_day, end_day)
 
     #NS홈쇼핑
     #result_list = crawling_nsshooping(start_day, end_day)
     
     #공영홈쇼핑
-    ## https://www.gongyoungshop.kr/tvshopping/selectScheduleSub.do?brcStdDate=20200610
+    #result_list = crawling_ky_homeshopping(start_day, end_day)
 
     #print(result_list)
 
     write_excel_file(result_list, view_all_item)
-
-    
 
 
 # Main
