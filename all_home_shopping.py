@@ -199,16 +199,30 @@ def crawling_ky_homeshopping(start_day, end_day):
         
         d = start_day + timedelta(days=i)
         today = d.strftime('%Y%m%d')
-        search_day = d.strftime('%Y-%m-%d')
+        #search_day = d.strftime('%Y-%m-%d')
 
         one_day_list = []
        
         # KongYoung home shopping
-        url_ky = "https://www.gongyoungshop.kr/tvshopping/selectScheduleSub.do?brcStdDate=20200610"
+        url_ky = "https://www.gongyoungshop.kr/tvshopping/selectScheduleSub.do?brcStdDate=" + today
         print(url_ky)
 
         time.sleep(0.5)
 
+        handle = None
+        while handle == None:
+            print(handle)
+            try:
+                handle = urllib.request.urlopen(url_ky)
+                print(handle)
+            except:
+                pass
+        
+        data = handle.read()
+        soup = BeautifulSoup(data, 'html.parser', from_encoding='utf-8')
+
+
+        homeshopping_list.append(one_day_list)
     return homeshopping_list
 
 def crawling_lotte_homeshopping(start_day, end_day):
@@ -225,10 +239,41 @@ def crawling_lotte_homeshopping(start_day, end_day):
         one_day_list = []
        
         # Lotte home shopping
-        url_lotte = "http://www.lotteimall.com/main/searchTvPgmByDay.lotte?bd_date=20200609"
+        url_lotte = "http://www.lotteimall.com/main/searchTvPgmByDay.lotte?bd_date=" + today
         print(url_lotte)
 
         time.sleep(0.5)
+        
+        handle = None
+        while handle == None:
+            print(handle)
+            try:
+                handle = urllib.request.urlopen(url_lotte)
+                print(handle)
+            except:
+                pass
+
+        data = handle.read()
+        soup = BeautifulSoup(data, 'html.parser', from_encoding='utf-8')
+
+        tsitem_list = soup.find('div',{'class','rn_tsitem_list'})
+        divs = tsitem_list.findAll('div', {'class','rn_tsitem_wrap'})
+
+        for div in divs:
+            time_table_div = div.find('div',{'class','rn_tsitem_caption'})
+            time_table = time_table_div.find('span')
+            
+            lotte_item_list = []
+            first_item = div.find('a',{'class':'rn_tsitem_title'})
+            lotte_item_list.append(first_item.text.strip())
+
+            items = div.findAll('a',{'class':'rn_more_item'})
+            for item in items:
+                lotte_item_list.append(item.text.strip())
+
+            one_day_list.append([today, '', time_table.text, lotte_item_list])
+
+        homeshopping_list.append(one_day_list)
 
     return homeshopping_list
 
@@ -246,10 +291,56 @@ def crawling_nsshopping(start_day, end_day):
         one_day_list = []
        
         # GS home shopping
-        url_ns = "http://www.nsmall.com/TVHomeShoppingBrodcastingList?tab_gubun=1&tab_Week=1&tab_bord=0&selectDay=" + search_day + "&catalogId=18151&langId=-9&storeId=13001#goToLocation"
-        print(url_gs)
+        url_ns = "http://www.nsmall.com/TVHomeShoppingBrodcastingList?selectDay=" + search_day + "#goToLocation"
+        print(url_ns)
 
         time.sleep(0.5)
+
+        handle = None
+        while handle == None:
+            print(handle)
+            try:
+                handle = urllib.request.urlopen(url_ns)
+                print(handle)
+            except:
+                pass
+
+        data = handle.read()
+        soup = BeautifulSoup(data, 'html.parser', from_encoding='utf-8')
+        #print(soup)
+
+        tv_table = soup.find('div',{'class':'tv_table mt40'})
+        #print(tv_table)
+        tds = tv_table.findAll('td')
+        print(len(tds))
+        
+        first_time = 0
+        
+        for i in range(len(tds)):
+            #print(i, tds[i].text.strip())
+            if 'class' in tds[i].attrs:
+                #print(tds[i].attrs['class'])
+                classes = tds[i].attrs['class']
+                if classes[0] == 'air':
+                    if first_time == 1:
+                        one_day_list.append([today, host.text, time_table.text, ns_item_list])
+                    else:
+                        first_time = 1
+                    #print("dateTime")
+                    time_table= tds[i].find('strong', {'class':'ico_time'})
+                    host= tds[i].find('strong', {'class':'txt'})
+                    #hn_item_list.clear()
+                    ns_item_list = []
+                elif classes[0] == 'al':
+                    prdname = tds[i].find('div', {'class':'item_info'})
+                    #print(prdname)
+                    if len(prdname) != 0:
+                        subitems = prdname.find('a')
+                        ns_item_list.append(subitems.text.strip().replace('\n',''))
+
+        one_day_list.append([today, host.text, time_table.text, ns_item_list])
+
+        homeshopping_list.append(one_day_list)
 
     return homeshopping_list
 
@@ -372,8 +463,8 @@ def main():
     # NS홈쇼핑+, 홈앤쇼핑2채널, K쇼핑2채널
 
     # Options...
-    start_day = datetime(2020,6,1)
-    end_day = datetime(2020,6,2)
+    start_day = datetime(2020,6,9)
+    end_day = datetime(2020,6,10)
     #delta_days = end_day-start_day
 
     view_all_item = 1
@@ -391,13 +482,13 @@ def main():
     #result_list = crawling_hyundai_shopping(start_day, end_day)
 
     #홈앤쇼핑
-    result_list = crawling_home_and_shopping(start_day, end_day)
+    #result_list = crawling_home_and_shopping(start_day, end_day)
 
     #롯데홈쇼핑
     #result_list = crawling_lotte_homeshopping(start_day, end_day)
 
     #NS홈쇼핑
-    #result_list = crawling_nsshooping(start_day, end_day)
+    result_list = crawling_nsshopping(start_day, end_day)
     
     #공영홈쇼핑
     #result_list = crawling_ky_homeshopping(start_day, end_day)
