@@ -528,6 +528,10 @@ def write_excel_file(result_list, view_all_item, search_data, search_op):
                 worksheet0.write(offset, 0, search_data[i][0], filter_format3)
                 worksheet0.write(offset, 1, search_data[i][1], filter_format3)
                 worksheet0.write(offset, 2, search_data[i][2], filter_format3)
+                worksheet0.write(offset+j, 3, '', filter_format3)
+                worksheet0.write(offset+j, 4, '', filter_format3)
+                worksheet0.write(offset+j, 5, '', filter_format3)
+                worksheet0.write(offset+j, 6, '', filter_format3)
                 offset = offset + 1
             else:
                 for j in range(len(search_data[i][3])):
@@ -552,7 +556,7 @@ def write_excel_file(result_list, view_all_item, search_data, search_op):
             worksheet0.write(offset, 0, search_data[i][0], filter_format3)
             worksheet0.write(offset, 1, search_data[i][1], filter_format3)
             worksheet0.write(offset, 2, search_data[i][2], filter_format3)
-            worksheet0.write(offset, 2, len(search_data[i][3]), filter_format3)
+            worksheet0.write(offset, 3, len(search_data[i][3]), filter_format3)
             offset = offset + 1
     
     workbook.close()
@@ -588,8 +592,8 @@ def main():
     # NS홈쇼핑+, 홈앤쇼핑2채널, K쇼핑2채널
 
     # Options...
-    start_day = datetime(2020,5,1)
-    end_day = datetime(2020,5,30)
+    start_day = datetime(2020,3,1)
+    end_day = datetime(2020,3,31)
     #delta_days = end_day-start_day
     select_cj       = 1
     select_gs       = 1
