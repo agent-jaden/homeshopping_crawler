@@ -7,6 +7,7 @@ import xlsxwriter
 import xlrd
 from datetime import datetime, timedelta
 import urllib.request
+import json
 
 def crawling_hyundai_shopping(start_day, end_day):
 
@@ -96,7 +97,7 @@ def crawling_home_and_shopping(start_day, end_day):
 
         tv_table = soup.find('table',{'class':'tvList'})
         tds= tv_table.findAll('td')
-        print(len(tds))
+        #print(len(tds))
 
         first_time = 0
 
@@ -152,14 +153,14 @@ def crawling_gs_homeshopping(start_day, end_day):
         # GS 홈쇼핑
         handle = None
         while handle == None:
-            print(handle)
+            #print(handle)
             try:
                 handle = urllib.request.urlopen(url_gs)
-                print(handle)
+                #print(handle)
             except:
                 pass
         
-        print("aaa")
+        #print("aaa")
 
         data = handle.read()
         soup = BeautifulSoup(data, 'html.parser', from_encoding='utf-8')
@@ -167,8 +168,9 @@ def crawling_gs_homeshopping(start_day, end_day):
         articles = soup.findAll('article')
 
         for article in articles:
-            time_table = soup.find('span', {'class':'times'})
+            time_table = article.find('span', {'class':'times'})
             gs_time = time_table.text
+            #print(gs_time)
 
             items = article.findAll('li', {'class':'prd-item'})
         
@@ -182,7 +184,7 @@ def crawling_gs_homeshopping(start_day, end_day):
                     gs_item_list.append(prd_dt.text)
                 else:
                     gs_item_list.append(prd_name.text.strip())
-                    print(prd_name.text)
+                    #print(prd_name.text)
 
             one_day_list.append([today, '', gs_time , gs_item_list])
 
@@ -211,18 +213,42 @@ def crawling_ky_homeshopping(start_day, end_day):
 
         handle = None
         while handle == None:
-            print(handle)
+            #print(handle)
             try:
                 handle = urllib.request.urlopen(url_ky)
-                print(handle)
+                #print(handle)
             except:
                 pass
         
         data = handle.read()
-        soup = BeautifulSoup(data, 'html.parser', from_encoding='utf-8')
+        json_file = json.loads(data.decode('utf-8'))
+        #print(json_file.keys())
+        prod_list = json_file['prdList']
+        #print(len(prod_list), prod_list[0].keys())
 
+        ky_item_list = []
+        prev_begin_time = ''
+        prev_end_time = ''
+        prev_title = ''
+        for prod in prod_list:
+            begin_time = prod['brcBgnDtm']
+            end_time = prod['brcEndDtm']
+            title = prod['brcPgmNm']
+            item_name = prod['prdNm']
+            if prev_begin_time == "" or prev_begin_time == begin_time:
+                ky_item_list.append(item_name)
+            else:
+                one_day_list.append([today, prev_title, prev_begin_time + "~" + prev_end_time, ky_item_list])
+                ky_item_list = []
+                ky_item_list.append(item_name)
 
+            prev_end_time = prod['brcEndDtm']
+            prev_title = prod['brcPgmNm']
+            prev_begin_time = prod['brcBgnDtm']
+
+        one_day_list.append([today, title, begin_time + "~" + end_time, ky_item_list])
         homeshopping_list.append(one_day_list)
+
     return homeshopping_list
 
 def crawling_lotte_homeshopping(start_day, end_day):
@@ -246,10 +272,10 @@ def crawling_lotte_homeshopping(start_day, end_day):
         
         handle = None
         while handle == None:
-            print(handle)
+            #print(handle)
             try:
                 handle = urllib.request.urlopen(url_lotte)
-                print(handle)
+                #print(handle)
             except:
                 pass
 
@@ -282,6 +308,11 @@ def crawling_nsshopping(start_day, end_day):
     delta = end_day - start_day
     homeshopping_list = []
 
+    options = Options()
+    options.headless = True
+    #options.headless = False
+    browser = webdriver.Chrome(executable_path="./chromedriver.exe", options=options)
+
     for i in range(delta.days + 1):
         
         d = start_day + timedelta(days=i)
@@ -290,12 +321,14 @@ def crawling_nsshopping(start_day, end_day):
 
         one_day_list = []
        
-        # GS home shopping
+        # NS home shopping
         url_ns = "http://www.nsmall.com/TVHomeShoppingBrodcastingList?selectDay=" + search_day + "#goToLocation"
+        browser.get(url_ns)
         print(url_ns)
 
         time.sleep(0.5)
 
+        ''' 
         handle = None
         while handle == None:
             print(handle)
@@ -308,11 +341,14 @@ def crawling_nsshopping(start_day, end_day):
         data = handle.read()
         soup = BeautifulSoup(data, 'html.parser', from_encoding='utf-8')
         #print(soup)
+        '''
+        html = browser.page_source
+        soup = BeautifulSoup(html, 'html.parser', from_encoding='utf-8')
 
         tv_table = soup.find('div',{'class':'tv_table mt40'})
         #print(tv_table)
         tds = tv_table.findAll('td')
-        print(len(tds))
+        #print(len(tds))
         
         first_time = 0
         
@@ -327,7 +363,7 @@ def crawling_nsshopping(start_day, end_day):
                     else:
                         first_time = 1
                     #print("dateTime")
-                    time_table= tds[i].find('strong', {'class':'ico_time'})
+                    time_table= tds[i].find('em')
                     host= tds[i].find('strong', {'class':'txt'})
                     #hn_item_list.clear()
                     ns_item_list = []
@@ -335,8 +371,11 @@ def crawling_nsshopping(start_day, end_day):
                     prdname = tds[i].find('div', {'class':'item_info'})
                     #print(prdname)
                     if len(prdname) != 0:
-                        subitems = prdname.find('a')
-                        ns_item_list.append(subitems.text.strip().replace('\n',''))
+                        subitems = prdname.findAll('a')
+                        if len(subitems) == 2:
+                            ns_item_list.append(subitems[0].text.strip().replace('\n','') + subitems[1].text.strip().replace('\n',''))
+                        else:
+                            ns_item_list.append(subitems[0].text.strip().replace('\n',''))
 
         one_day_list.append([today, host.text, time_table.text, ns_item_list])
 
@@ -422,35 +461,44 @@ def write_excel_file(result_list, view_all_item):
     num2_format.set_border()
     #num3_format = workbook.add_format({'num_format':'#,##0.00', 'fg_color':'#FCE4D6'})
 
-    worksheet_name ='CJ.oshopping'
-    worksheet0 = workbook.add_worksheet(worksheet_name) 
+    for n in range(len(result_list)):
 
-    offset = 1
+        result_sheet = result_list[n][1]
 
-    worksheet0.write(0, 0, "날짜", filter_format3)
-    worksheet0.write(0, 1, "분류/제목", filter_format3)
-    worksheet0.write(0, 2, "시간", filter_format3)
-    worksheet0.write(0, 3, "아이템", filter_format3)
+        worksheet_name = result_list[n][0]
+        worksheet0 = workbook.add_worksheet(worksheet_name) 
 
-    for d in range(len(result_list)):
-        result_day = result_list[d]
-        for i in range(len(result_day)):
-            worksheet0.write(i+offset, 0, result_day[i][0], filter_format3)
-            worksheet0.write(i+offset, 1, result_day[i][1], filter_format3)
-            worksheet0.write(i+offset, 2, result_day[i][2], filter_format3)
-            if view_all_item == 0:
-                worksheet0.write(i+offset, 3, result_day[i][3][0], filter_format3)
-            else:
-                item_all = ''
-                for j in range(len(result_day[i][3])):
-                    if j == (len(result_day[i][3]) - 1):
-                        item_all = item_all + result_day[i][3][j] 
-                    else:
-                        item_all = item_all + result_day[i][3][j] + '\n'
-                    #worksheet0.write(i+j+offset, 3, result_day[i][3][j], filter_format3)
-                worksheet0.write(i+offset, 3, item_all, filter_format3)
-                #offset = offset + len(result_day[i][3])-1
-        offset = offset + len(result_day)
+        offset = 1
+
+        worksheet0.set_column(0,0,20)
+        worksheet0.set_column(0,1,20)
+        worksheet0.set_column(0,2,20)
+
+  
+        worksheet0.write(0, 0, "날짜", filter_format3)
+        worksheet0.write(0, 1, "분류/제목", filter_format3)
+        worksheet0.write(0, 2, "시간", filter_format3)
+        worksheet0.write(0, 3, "아이템", filter_format3)
+
+        for d in range(len(result_sheet)):
+            result_day = result_sheet[d]
+            for i in range(len(result_day)):
+                worksheet0.write(i+offset, 0, result_day[i][0], filter_format3)
+                worksheet0.write(i+offset, 1, result_day[i][1], filter_format3)
+                worksheet0.write(i+offset, 2, result_day[i][2], filter_format3)
+                if view_all_item == 0:
+                    worksheet0.write(i+offset, 3, result_day[i][3][0], filter_format3)
+                else:
+                    item_all = ''
+                    for j in range(len(result_day[i][3])):
+                        if j == (len(result_day[i][3]) - 1):
+                            item_all = item_all + result_day[i][3][j] 
+                        else:
+                            item_all = item_all + result_day[i][3][j] + '\n'
+                        #worksheet0.write(i+j+offset, 3, result_day[i][3][j], filter_format3)
+                    worksheet0.write(i+offset, 3, item_all, filter_format3)
+                    #offset = offset + len(result_day[i][3])-1
+            offset = offset + len(result_day)
 
     workbook.close()
 
@@ -466,32 +514,53 @@ def main():
     start_day = datetime(2020,6,9)
     end_day = datetime(2020,6,10)
     #delta_days = end_day-start_day
+    select_cj       = 1
+    select_gs       = 1
+    select_hs       = 1
+    select_hn       = 1
+    select_lotte    = 1
+    select_ns       = 1
+    select_ky       = 1
 
     view_all_item = 1
 
-    #input_file = "req_trade.xlsx"
+    result_list = []
     
     ## 라이브 홈쇼핑
     # CJ오쇼핑
-    #result_list = crawling_cj_oshopping(start_day, end_day)
+    if select_cj == 1:
+        result_sub_list = crawling_cj_oshopping(start_day, end_day)
+        result_list.append(["CJ오쇼핑", result_sub_list])
 
     # GS홈쇼핑
-    #result_list = crawling_gs_homeshopping(start_day, end_day)
+    if select_gs == 1:
+        result_sub_list = crawling_gs_homeshopping(start_day, end_day)
+        result_list.append(["GS홈쇼핑", result_sub_list])
 
     #현대홈쇼핑
-    #result_list = crawling_hyundai_shopping(start_day, end_day)
+    if select_hs == 1:
+        result_sub_list = crawling_hyundai_shopping(start_day, end_day)
+        result_list.append(["현대홈쇼핑", result_sub_list])
 
     #홈앤쇼핑
-    #result_list = crawling_home_and_shopping(start_day, end_day)
+    if select_hn == 1:
+        result_sub_list = crawling_home_and_shopping(start_day, end_day)
+        result_list.append(["홈앤쇼핑", result_sub_list])
 
     #롯데홈쇼핑
-    #result_list = crawling_lotte_homeshopping(start_day, end_day)
+    if select_lotte == 1:
+        result_sub_list = crawling_lotte_homeshopping(start_day, end_day)
+        result_list.append(["롯데홈쇼핑", result_sub_list])
 
     #NS홈쇼핑
-    result_list = crawling_nsshopping(start_day, end_day)
+    if select_ns == 1:
+        result_sub_list = crawling_nsshopping(start_day, end_day)
+        result_list.append(["NS홈쇼핑", result_sub_list])
     
     #공영홈쇼핑
-    #result_list = crawling_ky_homeshopping(start_day, end_day)
+    if select_ky == 1:
+        result_sub_list = crawling_ky_homeshopping(start_day, end_day)
+        result_list.append(["공영홈쇼핑", result_sub_list])
 
     #print(result_list)
 
