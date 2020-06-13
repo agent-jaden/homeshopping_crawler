@@ -484,8 +484,8 @@ def write_excel_file(result_list, view_all_item):
 
         for d in range(len(result_sheet)):
             result_day = result_sheet[d]
-            print(result_day)
-            print(result_day[0][0])
+            #print(result_day)
+            #print(result_day[0][0])
             for i in range(len(result_day)):
                 worksheet0.write(i+offset, 0, result_day[i][0], filter_format3)
                 worksheet0.write(i+offset, 1, result_day[i][1], filter_format3)
@@ -516,8 +516,8 @@ def main():
     # NS홈쇼핑+, 홈앤쇼핑2채널, K쇼핑2채널
 
     # Options...
-    start_day = datetime(2020,6,1)
-    end_day = datetime(2020,6,28)
+    start_day = datetime(2020,6,10)
+    end_day = datetime(2020,6,11)
     #delta_days = end_day-start_day
     select_cj       = 1
     select_gs       = 1
