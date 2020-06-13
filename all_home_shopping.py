@@ -8,6 +8,7 @@ import xlrd
 from datetime import datetime, timedelta
 import urllib.request
 import json
+import re
 
 def crawling_hyundai_shopping(start_day, end_day):
 
@@ -159,8 +160,6 @@ def crawling_gs_homeshopping(start_day, end_day):
                 #print(handle)
             except:
                 pass
-        
-        #print("aaa")
 
         data = handle.read()
         soup = BeautifulSoup(data, 'html.parser', from_encoding='utf-8')
@@ -328,20 +327,6 @@ def crawling_nsshopping(start_day, end_day):
 
         time.sleep(0.5)
 
-        ''' 
-        handle = None
-        while handle == None:
-            print(handle)
-            try:
-                handle = urllib.request.urlopen(url_ns)
-                print(handle)
-            except:
-                pass
-
-        data = handle.read()
-        soup = BeautifulSoup(data, 'html.parser', from_encoding='utf-8')
-        #print(soup)
-        '''
         html = browser.page_source
         soup = BeautifulSoup(html, 'html.parser', from_encoding='utf-8')
 
@@ -442,7 +427,7 @@ def crawling_cj_oshopping(start_day, end_day):
 
     return homeshopping_list
 
-def write_excel_file(result_list, view_all_item):
+def write_excel_file(result_list, view_all_item, search_data, search_op):
 
     workbook_name = "all_home_shopping.xlsx"
     workbook = xlsxwriter.Workbook(workbook_name)
@@ -461,6 +446,13 @@ def write_excel_file(result_list, view_all_item):
     num2_format = workbook.add_format({'num_format':'#,##0'})
     num2_format.set_border()
     #num3_format = workbook.add_format({'num_format':'#,##0.00', 'fg_color':'#FCE4D6'})
+
+    if search_op == 1:
+        #search_list = []
+        for i in range(len(search_data)):
+            search_sublist = []
+            search_data[i].append(search_sublist)
+
 
     for n in range(len(result_list)):
 
@@ -503,9 +495,89 @@ def write_excel_file(result_list, view_all_item):
                         #worksheet0.write(i+j+offset, 3, result_day[i][3][j], filter_format3)
                     worksheet0.write(i+offset, 3, item_all, filter_format3)
                     #offset = offset + len(result_day[i][3])-1
+
+                if search_op == 1:
+                    for s in range(len(search_data)):
+                        # Doing search
+                        #print(search_data[s][1], result_list[n][0])
+                        if search_data[s][1] == result_list[n][0]:
+                            #print(search_data[s][2])
+                            if re.compile(search_data[s][2]).search(item_all):
+                                #print("search", item_all)
+                                search_data[s][3].append([result_day[i][0], result_day[i][1],result_day[i][2], item_all])
+
             offset = offset + len(result_day)
 
+    #print(search_data)
+
+    if search_op == 1:
+        worksheet0 = workbook.add_worksheet("Search_result")
+        offset = 1
+
+        worksheet0.write(0, 0, "기업", filter_format3)
+        worksheet0.write(0, 1, "홈쇼핑", filter_format3)
+        worksheet0.write(0, 2, "검색 아이템", filter_format3)
+        worksheet0.write(0, 3, "날짜", filter_format3)
+        worksheet0.write(0, 4, "분류/제목", filter_format3)
+        worksheet0.write(0, 5, "시간", filter_format3)
+        worksheet0.write(0, 6, "아이템", filter_format3)
+
+        for i in range(len(search_data)):
+            print(len(search_data[i][3]))
+            if len(search_data[i][3]) == 0:
+                worksheet0.write(offset, 0, search_data[i][0], filter_format3)
+                worksheet0.write(offset, 1, search_data[i][1], filter_format3)
+                worksheet0.write(offset, 2, search_data[i][2], filter_format3)
+                offset = offset + 1
+            else:
+                for j in range(len(search_data[i][3])):
+                    worksheet0.write(offset+j, 0, search_data[i][0], filter_format3)
+                    worksheet0.write(offset+j, 1, search_data[i][1], filter_format3)
+                    worksheet0.write(offset+j, 2, search_data[i][2], filter_format3)
+                    worksheet0.write(offset+j, 3, search_data[i][3][j][0], filter_format3)
+                    worksheet0.write(offset+j, 4, search_data[i][3][j][1], filter_format3)
+                    worksheet0.write(offset+j, 5, search_data[i][3][j][2], filter_format3)
+                    worksheet0.write(offset+j, 6, search_data[i][3][j][3], filter_format3)
+                offset = offset + j+1
+
+        worksheet0 = workbook.add_worksheet("Search_Count")
+        offset = 1
+        
+        worksheet0.write(0, 0, "기업", filter_format3)
+        worksheet0.write(0, 1, "홈쇼핑", filter_format3)
+        worksheet0.write(0, 2, "검색 아이템", filter_format3)
+        worksheet0.write(0, 3, "검색 횟수", filter_format3)
+
+        for i in range(len(search_data)):
+            worksheet0.write(offset, 0, search_data[i][0], filter_format3)
+            worksheet0.write(offset, 1, search_data[i][1], filter_format3)
+            worksheet0.write(offset, 2, search_data[i][2], filter_format3)
+            worksheet0.write(offset, 2, len(search_data[i][3]), filter_format3)
+            offset = offset + 1
+    
     workbook.close()
+
+def read_excel_file(input_file):
+
+    read_data = []
+
+    workbook_name = input_file
+    workbook = xlrd.open_workbook(workbook_name)
+    sheet_list = workbook.sheets()
+    sheet1 = sheet_list[0]
+
+    num_req = int(sheet1.cell(0,0).value)
+
+    for i in range(num_req):
+        corp_name = sheet1.cell(i+2,1).value
+        hs_name = sheet1.cell(i+2,2).value
+        search_item = sheet1.cell(i+2,3).value
+
+        print("Read Data : ", corp_name, hs_name, search_item)
+        read_data.append([corp_name, hs_name, search_item])
+       
+    return read_data
+
 
 def main():
 
@@ -516,8 +588,8 @@ def main():
     # NS홈쇼핑+, 홈앤쇼핑2채널, K쇼핑2채널
 
     # Options...
-    start_day = datetime(2020,6,10)
-    end_day = datetime(2020,6,11)
+    start_day = datetime(2020,5,1)
+    end_day = datetime(2020,5,30)
     #delta_days = end_day-start_day
     select_cj       = 1
     select_gs       = 1
@@ -526,6 +598,8 @@ def main():
     select_lotte    = 1
     select_ns       = 1
     select_ky       = 1
+
+    search_op       = 1
 
     view_all_item = 1
 
@@ -575,8 +649,11 @@ def main():
         result_list.append(["공영홈쇼핑", result_sub_list])
 
     #print(result_list)
+    
+    input_file = "homeshopping_checklist.xlsx"
+    search_data = read_excel_file(input_file)
 
-    write_excel_file(result_list, view_all_item)
+    write_excel_file(result_list, view_all_item, search_data, search_op)
 
 
 # Main
