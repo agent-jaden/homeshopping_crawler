@@ -397,10 +397,11 @@ def crawling_cj_oshopping(start_day, end_day):
         
         current_day = start_day + timedelta(days=d)
         rdate = current_day.strftime('%Y%m%d')
-        print(rdate)
+        #print(rdate)
 
         url = "http://display.cjmall.com/p/homeTab/main?hmtabMenuId=002409#bdDt%3A" + rdate
         browser.get(url)
+        print(url)
 
         time.sleep(0.5)
 
@@ -443,7 +444,7 @@ def crawling_cj_oshopping(start_day, end_day):
 
 def write_excel_file(result_list, view_all_item):
 
-    workbook_name = "all_home_shopping_test.xlsx"
+    workbook_name = "all_home_shopping.xlsx"
     workbook = xlsxwriter.Workbook(workbook_name)
     #print(result_list)
 
@@ -467,6 +468,7 @@ def write_excel_file(result_list, view_all_item):
 
         worksheet_name = result_list[n][0]
         worksheet0 = workbook.add_worksheet(worksheet_name) 
+        print(worksheet_name)
 
         offset = 1
 
@@ -482,6 +484,8 @@ def write_excel_file(result_list, view_all_item):
 
         for d in range(len(result_sheet)):
             result_day = result_sheet[d]
+            print(result_day)
+            print(result_day[0][0])
             for i in range(len(result_day)):
                 worksheet0.write(i+offset, 0, result_day[i][0], filter_format3)
                 worksheet0.write(i+offset, 1, result_day[i][1], filter_format3)
@@ -491,10 +495,11 @@ def write_excel_file(result_list, view_all_item):
                 else:
                     item_all = ''
                     for j in range(len(result_day[i][3])):
-                        if j == (len(result_day[i][3]) - 1):
-                            item_all = item_all + result_day[i][3][j] 
-                        else:
-                            item_all = item_all + result_day[i][3][j] + '\n'
+                        if result_day[i][3][j] != None:
+                            if j == (len(result_day[i][3]) - 1):
+                                item_all = item_all + result_day[i][3][j] 
+                            else:
+                                item_all = item_all + result_day[i][3][j] + '\n'
                         #worksheet0.write(i+j+offset, 3, result_day[i][3][j], filter_format3)
                     worksheet0.write(i+offset, 3, item_all, filter_format3)
                     #offset = offset + len(result_day[i][3])-1
@@ -511,8 +516,8 @@ def main():
     # NS홈쇼핑+, 홈앤쇼핑2채널, K쇼핑2채널
 
     # Options...
-    start_day = datetime(2020,6,9)
-    end_day = datetime(2020,6,10)
+    start_day = datetime(2020,6,1)
+    end_day = datetime(2020,6,28)
     #delta_days = end_day-start_day
     select_cj       = 1
     select_gs       = 1
@@ -529,36 +534,43 @@ def main():
     ## 라이브 홈쇼핑
     # CJ오쇼핑
     if select_cj == 1:
+        print("CJ오쇼핑")
         result_sub_list = crawling_cj_oshopping(start_day, end_day)
         result_list.append(["CJ오쇼핑", result_sub_list])
 
     # GS홈쇼핑
     if select_gs == 1:
+        print("GS홈쇼핑")
         result_sub_list = crawling_gs_homeshopping(start_day, end_day)
         result_list.append(["GS홈쇼핑", result_sub_list])
 
     #현대홈쇼핑
     if select_hs == 1:
+        print("현대홈쇼핑")
         result_sub_list = crawling_hyundai_shopping(start_day, end_day)
         result_list.append(["현대홈쇼핑", result_sub_list])
 
     #홈앤쇼핑
     if select_hn == 1:
+        print("홈앤쇼핑")
         result_sub_list = crawling_home_and_shopping(start_day, end_day)
         result_list.append(["홈앤쇼핑", result_sub_list])
 
     #롯데홈쇼핑
     if select_lotte == 1:
+        print("롯데홈쇼핑")
         result_sub_list = crawling_lotte_homeshopping(start_day, end_day)
         result_list.append(["롯데홈쇼핑", result_sub_list])
 
     #NS홈쇼핑
     if select_ns == 1:
+        print("NS홈쇼핑")
         result_sub_list = crawling_nsshopping(start_day, end_day)
         result_list.append(["NS홈쇼핑", result_sub_list])
     
     #공영홈쇼핑
     if select_ky == 1:
+        print("공영홈쇼핑")
         result_sub_list = crawling_ky_homeshopping(start_day, end_day)
         result_list.append(["공영홈쇼핑", result_sub_list])
 
