@@ -592,8 +592,8 @@ def main():
     # NS홈쇼핑+, 홈앤쇼핑2채널, K쇼핑2채널
 
     # Options...
-    start_day = datetime(2020,6,1)
-    end_day = datetime(2020,6,28)
+    start_day = datetime(2020,7,1)
+    end_day = datetime(2020,7,31)
     #delta_days = end_day-start_day
     select_cj       = 1
     select_gs       = 1
