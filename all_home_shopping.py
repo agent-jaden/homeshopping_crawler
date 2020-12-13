@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import urllib.request
 import json
 import re
+import os
 
 def crawling_hyundai_shopping(start_day, end_day):
 
@@ -33,7 +34,7 @@ def crawling_hyundai_shopping(start_day, end_day):
         
         one_day_list = []
        
-        url_hmall = "https://www.hyundaihmall.com/front/bmc/brodPordPbdv.do?cnt=0&date=" + search_day
+        url_hmall = "http://www.hyundaihmall.com/front/bmc/brodPordPbdv.do?cnt=" + str(cal_cnt) + "&date=" + search_day
         print(url_hmall)
 
         handle = None
@@ -287,16 +288,18 @@ def crawling_lotte_homeshopping(start_day, end_day):
         for div in divs:
             time_table_div = div.find('div',{'class','rn_tsitem_caption'})
             time_table = time_table_div.find('span')
+            #print(time_table.text)
             
             lotte_item_list = []
             first_item = div.find('a',{'class':'rn_tsitem_title'})
-            lotte_item_list.append(first_item.text.strip())
+            if first_item != None:
+                lotte_item_list.append(first_item.text.strip())
 
-            items = div.findAll('a',{'class':'rn_more_item'})
-            for item in items:
-                lotte_item_list.append(item.text.strip())
+                items = div.findAll('a',{'class':'rn_more_item'})
+                for item in items:
+                    lotte_item_list.append(item.text.strip())
 
-            one_day_list.append([today, '', time_table.text, lotte_item_list])
+                one_day_list.append([today, '', time_table.text, lotte_item_list])
 
         homeshopping_list.append(one_day_list)
 
@@ -429,7 +432,14 @@ def crawling_cj_oshopping(start_day, end_day):
 
 def write_excel_file(result_list, view_all_item, search_data, search_op):
 
-    workbook_name = "all_home_shopping.xlsx"
+    now = datetime.now()
+    out_dir = now.strftime("%y%m%d_%H%M") 
+
+    cur_dir = os.getcwd()
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
+
+    workbook_name = out_dir+"/all_home_shopping_"+out_dir+".xlsx"
     workbook = xlsxwriter.Workbook(workbook_name)
     #print(result_list)
 
@@ -582,8 +592,7 @@ def read_excel_file(input_file):
        
     return read_data
 
-
-def main():
+def scrape_homeshopping(input_file):
 
     #[TODO] 
     ##티커머스...
@@ -592,8 +601,8 @@ def main():
     # NS홈쇼핑+, 홈앤쇼핑2채널, K쇼핑2채널
 
     # Options...
-    start_day = datetime(2020,7,1)
-    end_day = datetime(2020,7,31)
+    start_day = datetime(2020,11,1)
+    end_day = datetime(2020,11,30)
     #delta_days = end_day-start_day
     select_cj       = 1
     select_gs       = 1
@@ -654,10 +663,184 @@ def main():
 
     #print(result_list)
     
-    input_file = "homeshopping_checklist.xlsx"
+    
     search_data = read_excel_file(input_file)
 
     write_excel_file(result_list, view_all_item, search_data, search_op)
+
+def find_homeshopping(input_file):
+
+    # Make search result
+
+    # RAW data fiils
+    data_files =    ["2020/all_home_shopping_2001.xlsx"]
+    '''
+    data_files =    [
+                    "2020/all_home_shopping_2001.xlsx",
+                    "2020/all_home_shopping_2002.xlsx",
+                    "2020/all_home_shopping_2003.xlsx",
+                    "2020/all_home_shopping_2004.xlsx",
+                    "2020/all_home_shopping_2005.xlsx",
+                    "2020/all_home_shopping_2006.xlsx",
+                    "2020/all_home_shopping_2007.xlsx",
+                    "2020/all_home_shopping_2008.xlsx",
+                    "2020/all_home_shopping_2010.xlsx",
+                    "2020/all_home_shopping_2011.xlsx"
+                    ]
+                    '''
+
+    # Read result list
+    # Homeshopping list -> one day list
+    # search day / title / time_table  / item
+
+    homeshopping_file_list = []
+
+    read_files_list = []
+
+    for file_name in data_files:
+
+        read_file = []
+        
+        print("File name : ", file_name)
+        workbook_name = file_name
+        workbook = xlrd.open_workbook(workbook_name)
+        sheet_list = workbook.sheets()
+
+        for sheet1 in sheet_list[0:7]:
+
+            read_homeshopping = []
+            print(sheet1.nrows, sheet1.name)
+            for i in range(sheet1.nrows-1):
+
+                date    =   sheet1.cell(i+1,0).value
+                title   =   sheet1.cell(i+1,1).value
+                time    =   sheet1.cell(i+1,2).value
+                item    =   sheet1.cell(i+1,3).value
+
+                read_homeshopping.append([date, title, time, item])
+
+            read_file.append([sheet1.name, read_homeshopping])
+            print(len(read_file))
+            #print(read_homeshopping)
+
+        read_files_list.append(read_file)
+
+
+    # corp_name, hs_name, search_item
+    search_data = read_excel_file(input_file)
+
+    for i in range(len(search_data)):
+        search_sublist = []
+        search_data[i].append(search_sublist)
+
+    for result_file in read_files_list:
+        for result_list in result_file:
+            print(len(result_list[1]))
+            for n in range(len(result_list[1])):
+                #print(n)
+                
+                homeshopping_name = result_list[0]
+
+                date    =   result_list[1][n][0]
+                title   =   result_list[1][n][1]
+                time    =   result_list[1][n][2]
+                item_all=   result_list[1][n][3]
+
+                for s in range(len(search_data)):
+                    # Doing search
+                    #print(search_data[s][1], result_list[n][0])
+                    if search_data[s][1] == homeshopping_name:
+                        #print(search_data[s][2])
+                        if re.compile(search_data[s][2]).search(item_all):
+                            print("search : ", date, title, time)
+                            search_data[s][3].append([date, title, time, item_all])
+
+    # Write search result
+    now = datetime.now()
+    out_dir = now.strftime("%y%m%d_%H%M") 
+
+    cur_dir = os.getcwd()
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
+
+    workbook_name = out_dir+"/search_result_"+out_dir+".xlsx"
+    workbook = xlsxwriter.Workbook(workbook_name)
+
+    filter_format = workbook.add_format({'bold':True, 'fg_color': '#D7E4BC'	})
+    filter_format.set_border()
+    filter_format2 = workbook.add_format({'bold':True })
+    filter_format2.set_border()
+    filter_format3 = workbook.add_format({})
+    filter_format3.set_border()
+
+    percent_format = workbook.add_format({'num_format': '0.00%'})
+    num_format = workbook.add_format({'num_format':'0.00'})
+    num_format.set_border()
+    num2_format = workbook.add_format({'num_format':'#,##0'})
+    num2_format.set_border()
+
+    worksheet0 = workbook.add_worksheet("Search_result")
+        
+    offset = 1
+
+    worksheet0.write(0, 0, "기업", filter_format3)
+    worksheet0.write(0, 1, "홈쇼핑", filter_format3)
+    worksheet0.write(0, 2, "검색 아이템", filter_format3)
+    worksheet0.write(0, 3, "날짜", filter_format3)
+    worksheet0.write(0, 4, "분류/제목", filter_format3)
+    worksheet0.write(0, 5, "시간", filter_format3)
+    worksheet0.write(0, 6, "아이템", filter_format3)
+
+    for i in range(len(search_data)):
+        print(len(search_data[i][3]))
+        if len(search_data[i][3]) == 0:
+            worksheet0.write(offset, 0, search_data[i][0], filter_format3)
+            worksheet0.write(offset, 1, search_data[i][1], filter_format3)
+            worksheet0.write(offset, 2, search_data[i][2], filter_format3)
+            worksheet0.write(offset+j, 3, '', filter_format3)
+            worksheet0.write(offset+j, 4, '', filter_format3)
+            worksheet0.write(offset+j, 5, '', filter_format3)
+            worksheet0.write(offset+j, 6, '', filter_format3)
+            offset = offset + 1
+        else:
+            for j in range(len(search_data[i][3])):
+                worksheet0.write(offset+j, 0, search_data[i][0], filter_format3)
+                worksheet0.write(offset+j, 1, search_data[i][1], filter_format3)
+                worksheet0.write(offset+j, 2, search_data[i][2], filter_format3)
+                worksheet0.write(offset+j, 3, search_data[i][3][j][0], filter_format3)
+                worksheet0.write(offset+j, 4, search_data[i][3][j][1], filter_format3)
+                worksheet0.write(offset+j, 5, search_data[i][3][j][2], filter_format3)
+                worksheet0.write(offset+j, 6, search_data[i][3][j][3], filter_format3)
+            offset = offset + j+1
+
+    worksheet0 = workbook.add_worksheet("Search_Count")
+    offset = 1
+    
+    worksheet0.write(0, 0, "기업", filter_format3)
+    worksheet0.write(0, 1, "홈쇼핑", filter_format3)
+    worksheet0.write(0, 2, "검색 아이템", filter_format3)
+    worksheet0.write(0, 3, "검색 횟수", filter_format3)
+
+    for i in range(len(search_data)):
+        worksheet0.write(offset, 0, search_data[i][0], filter_format3)
+        worksheet0.write(offset, 1, search_data[i][1], filter_format3)
+        worksheet0.write(offset, 2, search_data[i][2], filter_format3)
+        worksheet0.write(offset, 3, len(search_data[i][3]), filter_format3)
+        offset = offset + 1
+    
+    workbook.close()
+
+
+
+def main():
+
+    input_file = "homeshopping_checklist.xlsx"
+    
+    #scrape_homeshopping(input_file)
+
+    find_homeshopping(input_file)
+
+    
 
 
 # Main
